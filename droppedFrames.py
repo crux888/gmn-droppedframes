@@ -11,6 +11,7 @@ from the command line (see the commandLine function for more details).
 
 UK0034 edit
 UK0035 edit
+UK0034 SSH edit
 """
 
 
