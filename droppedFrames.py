@@ -8,10 +8,6 @@ capture and its CPU is throttled. They can also occur due to power cuts.
 This script can be run automatically each night as an RMS external script
 (see the rmsExternal function for more details). It can also be run manually
 from the command line (see the commandLine function for more details).
-
-UK0034 edit
-UK0035 edit
-UK0034 SSH edit
 """
 
 
@@ -38,7 +34,7 @@ DROPPED_FRAME_TDELTA = timedelta(seconds=15)
 
 # Set ANNOTATE_IMAGE to True if you want the captured stack image
 # to be automatically updated with the number of dropped frames.
-ANNOTATE_IMAGE = True
+ANNOTATE_IMAGE = False
 
 
 def rmsExternal(cap_dir, arch_dir, config):
