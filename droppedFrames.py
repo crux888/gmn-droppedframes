@@ -56,9 +56,7 @@ def rmsExternal(cap_dir, arch_dir, config):
         f.write('1')
 
     # Clear existing log handlers and set new ones for this script
-    log = logging.getLogger("logger")
-    while len(log.handlers) > 0:
-        log.removeHandler(log.handlers[0])
+    clearLogHandlers()
     initLogging(config, 'droppedframes_')
     log.info('starting external script for dropped frames')
 
@@ -112,6 +110,7 @@ def rmsExternal(cap_dir, arch_dir, config):
         with open(os.path.join(srcdir, 'extrascript'), 'r') as extraf:
             extrascript = extraf.readline().strip()
         log.info('running additional script {:s}'.format(extrascript))
+        clearLogHandlers()
         sloc, sname = os.path.split(extrascript)
         sys.path.append(sloc)
         scrname, _ = os.path.splitext(sname)
@@ -124,12 +123,20 @@ def rmsExternal(cap_dir, arch_dir, config):
         except:
             log.info('unable to remove reboot lock file, pi will not reboot')
             pass
+        clearLogHandlers()
 
     return
 
 
+def clearLogHandlers():
+    """Function to clear existing log handlers"""
+    log = logging.getLogger("logger")
+    while len(log.handlers) > 0:
+        log.removeHandler(log.handlers[0])
+
+
 def annotateImage(img_path, message):
-    """Function to annoate an image with the number of dropped frames."""
+    """Function to annotate an image with the number of dropped frames."""
     my_image = Image.open(img_path)
     width, height = my_image.size
     image_editable = ImageDraw.Draw(my_image)
