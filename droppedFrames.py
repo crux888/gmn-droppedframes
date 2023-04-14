@@ -10,28 +10,46 @@ This script can be run automatically each night as an RMS external script
 from the command line (see the commandLine function for more details).
 """
 
-
+# System imports
 import os
 import sys
 import glob
 import shutil
-import configparser
 import logging
+import smtplib
+import configparser
 from statistics import mean
+from email.message import EmailMessage
 from datetime import datetime, timedelta
-
-import RMS.ConfigReader as cr
-from PIL import Image, ImageFont, ImageDraw
 from importlib import import_module as impmod
+from PIL import Image, ImageFont, ImageDraw
+
+# RMS imports
+import RMS.ConfigReader as cr
 from RMS.Logger import initLogging
 
-sys.path.append(os.path.split(os.path.abspath(__file__))[0])
+# Local imports
+import myEmail
+# myEmail.py should contain email credentials as follows:
+#   import os
+#   def setVar():
+#       os.environ['EMAIL_TO'] = 'yourname@domain.com
+#       os.environ['EMAIL_FROM'] = 'yourname@domain.com'
+#       os.environ['EMAIL_FROM_PASSWORD'] = 'yourpassword'
 
+# Update system path
+sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 
 # Set DROPPED_FRAME_TDELTA to the number of seconds that you
 # consider to be a dropped frame.
 DROPPED_FRAME_TDELTA = timedelta(seconds=15)
 
+# Set EMAIL_RESULTS to True if you want a warning email to be sent
+# when the number of dropped frames exceeds EMAIL_FRAMES
+EMAIL_RESULTS = True
+EMAIL_FRAMES = 0
+
+# EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want the captured stack image
 # to be automatically updated with the number of dropped frames.
 ANNOTATE_IMAGE = False
@@ -68,8 +86,10 @@ def rmsExternal(cap_dir, arch_dir, config):
     sys.path.append(srcdir)
 
     # Check captured directory for dropped frames
-    log.info('checking for dropped frames')
+    log.info('checking for dropped frames on %s', str(config.stationID))
+
     results = checkDroppedFrames(cap_dir)
+
     log.info('analysed %i FF files', results["files analysed"])
     if results["files ignored"] != 0:
         log.info('ignored %i FF files (bad filename format)',
@@ -81,6 +101,16 @@ def rmsExternal(cap_dir, arch_dir, config):
                  results["dropped frames"], str(DROPPED_FRAME_TDELTA.seconds))
         for detail in results["dropped details"]:
             log.info('    %s', detail)
+
+    if EMAIL_RESULTS and results["dropped frames"] >= EMAIL_FRAMES:
+        log.info('sending email for dropped frames')
+        subject = f'Dropped frames for {config.stationID}'
+        message = (f'Found {results["dropped frames"]} FF files with a time gap ' +
+                   f'of more than {str(DROPPED_FRAME_TDELTA.seconds)} seconds\n\n')
+        for detail in results["dropped details"]:
+            message += f'  {detail}\n'
+        log.info(sendEmail(subject, message))
+
     if ANNOTATE_IMAGE:
         log.info('annotating images')
         for directory in [cap_dir, arch_dir]:
@@ -102,6 +132,20 @@ def rmsExternal(cap_dir, arch_dir, config):
                                f'{results["dropped average"]} seconds)')
                 annotateImage(new_file, message)
                 log.info('annotated image: %s', new_file)
+
+    # Send email with main images
+    email_attachments = []
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack_*")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack*")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED*")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED*")))
+    for file in email_attachments:
+        log.info('image: %s', str(file))
+    log.info(sendEmail(email_subject=f'{config.stationID}',
+                       email_content=f'http://istrastream.com/rms-gmn/?id={config.stationID}',
+                       email_attachments=email_attachments))
+
+    # Log end of external script for dropped frames
     log.info('finishing external script for dropped frames')
 
     # Test for additional script
@@ -134,6 +178,40 @@ def clearLogHandlers():
     while len(log.handlers) > 0:
         log.removeHandler(log.handlers[0])
     return log
+
+
+def sendEmail(email_subject: str = 'No subject',
+              email_content: str = 'No content',
+              email_attachments: list = []):
+    """Function to send email"""
+
+    # Get email credentials
+    myEmail.setVar()
+    email_to = os.getenv('EMAIL_TO')
+    email_from = os.getenv('EMAIL_FROM')
+    email_from_password = os.getenv('EMAIL_FROM_PASSWORD')
+    if not email_to or not email_from or not email_from_password:
+        return 'email not sent (invalid credentials)'
+
+    # Prepare email
+    msg = EmailMessage()
+    msg['From'] = email_from
+    msg['To'] = email_to
+    msg['Subject'] = email_subject
+    msg.set_content(email_content)
+
+    # Add email attachments
+    for file in email_attachments:
+        with open(file, 'rb') as fp:
+            img_data = fp.read()
+        msg.add_attachment(img_data, maintype='image', subtype='jpg')
+                  
+    # Send email
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login(email_from, email_from_password)
+        smtp.send_message(msg)
+
+    return f'email sent to {email_to}'
 
 
 def annotateImage(img_path, message):
@@ -201,6 +279,18 @@ def commandLine():
         print()
         print(f'No FF files found in {path}')
     print()
+
+    #cap_dir = '/home/pi/Desktop/RMS_data/CapturedFiles/UK0034_20230413_192722_486556/'
+    #email_attachments = []
+    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack_*")))
+    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack*")))
+    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED*")))
+    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED*")))
+    #print(email_attachments)
+
+    #print(sendEmail(email_subject='UK0034',
+    #                email_content='http://istrastream.com/rms-gmn/?id=UK0034',
+    #                email_attachments=email_attachments))
 
 
 def checkDroppedFrames(directory):
