@@ -50,8 +50,6 @@ EMAIL_RESULTS = True
 EMAIL_FRAMES = 0
 
 # EXPERIMENTAL
-# Set ANNOTATE_IMAGE to True if you want the captured stack image
-# to be automatically updated with the number of dropped frames.
 # Set ANNOTATE_IMAGE to True if you want a detected stack image
 # to be annotated with the number of dropped frames.
 ANNOTATE_IMAGE = False
