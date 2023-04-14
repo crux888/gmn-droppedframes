@@ -52,6 +52,8 @@ EMAIL_FRAMES = 0
 # EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want the captured stack image
 # to be automatically updated with the number of dropped frames.
+# Set ANNOTATE_IMAGE to True if you want a detected stack image
+# to be annotated with the number of dropped frames.
 ANNOTATE_IMAGE = False
 
 
@@ -119,7 +121,8 @@ def rmsExternal(cap_dir, arch_dir, config):
             for original_file in files:
                 # TODO: After testing, remove code that copies original image
                 # ie. just make the annotation on the original image
-                new_file = original_file.replace('.jpg', '_copy.jpg')
+                new_file = original_file.replace(
+                    '.jpg', '_'+str(results["dropped frames"])+'_droppedframes.jpg')
                 shutil.copy(original_file, new_file)
                 if results["dropped frames"] == 0:
                     message = 'No dropped frames detected'
