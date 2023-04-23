@@ -47,7 +47,7 @@ DROPPED_FRAME_TDELTA = timedelta(seconds=15)
 # Set EMAIL_RESULTS to True if you want a warning email to be sent
 # when the number of dropped frames exceeds EMAIL_FRAMES
 EMAIL_RESULTS = True
-EMAIL_FRAMES = 0
+EMAIL_FRAMES = 5
 
 # EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want a detected stack image
