@@ -167,7 +167,6 @@ def rmsExternal(cap_dir, arch_dir, config):
             os.remove(rebootlockfile)
         except:
             log.info('unable to remove reboot lock file, pi will not reboot')
-            pass
         log = clearLogHandlers()
 
     return
@@ -206,7 +205,7 @@ def sendEmail(email_subject: str = 'No subject',
         with open(file, 'rb') as fp:
             img_data = fp.read()
         msg.add_attachment(img_data, maintype='image', subtype='jpg')
-                  
+
     # Send email
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
         smtp.login(email_from, email_from_password)
