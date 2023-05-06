@@ -52,7 +52,7 @@ EMAIL_FRAMES = 5
 # EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want a detected stack image
 # to be annotated with the number of dropped frames.
-ANNOTATE_IMAGE = False
+ANNOTATE_IMAGE = True
 
 
 def rmsExternal(cap_dir, arch_dir, config):
@@ -136,6 +136,7 @@ def rmsExternal(cap_dir, arch_dir, config):
 
     # Send email with main images
     email_attachments = []
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_droppedframes*")))
     email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack_*")))
     email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack*")))
     email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED*")))
