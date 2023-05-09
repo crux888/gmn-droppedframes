@@ -51,8 +51,10 @@ EMAIL_FRAMES = 5
 
 # EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want a detected stack image
-# to be annotated with the number of dropped frames.
+# to be annotated with the number of dropped frames when they
+# exceed ANNOTATE_IMAGE_FRAMES
 ANNOTATE_IMAGE = True
+ANNOTATE_IMAGE_FRAMES = 1
 
 
 def rmsExternal(cap_dir, arch_dir, config):
@@ -88,8 +90,10 @@ def rmsExternal(cap_dir, arch_dir, config):
     # Check captured directory for dropped frames
     log.info('checking for dropped frames on %s', str(config.stationID))
 
+    # Check for dropped frames
     results = checkDroppedFrames(cap_dir)
 
+    # Log the results
     log.info('analysed %i FF files', results["files analysed"])
     if results["files ignored"] != 0:
         log.info('ignored %i FF files (bad filename format)',
@@ -102,6 +106,7 @@ def rmsExternal(cap_dir, arch_dir, config):
         for detail in results["dropped details"]:
             log.info('    %s', detail)
 
+    # Send warning email with # dropped frames
     if EMAIL_RESULTS and results["dropped frames"] >= EMAIL_FRAMES:
         log.info('sending email for dropped frames')
         subject = f'Dropped frames for {config.stationID}'
@@ -111,7 +116,8 @@ def rmsExternal(cap_dir, arch_dir, config):
             message += f'  {detail}\n'
         log.info(sendEmail(subject, message))
 
-    if ANNOTATE_IMAGE:
+    # Annotate image with # dropped frams
+    if ANNOTATE_IMAGE and results["dropped frames"] >= ANNOTATE_IMAGE_FRAMES:
         log.info('annotating images')
         for directory in [cap_dir, arch_dir]:
             files = glob.glob(
@@ -136,11 +142,11 @@ def rmsExternal(cap_dir, arch_dir, config):
 
     # Send email with main images
     email_attachments = []
-    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_droppedframes*")))
-    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack_*")))
-    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack*")))
-    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED*")))
-    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED*")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_droppedframes.jpg")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack*meteors.jpg")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack.jpg")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED_thumbs.jpg")))
+    email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED_thumbs.jpg")))
     for file in email_attachments:
         log.info('image: %s', str(file))
     log.info(sendEmail(email_subject=f'{config.stationID}',
@@ -280,18 +286,6 @@ def commandLine():
         print()
         print(f'No FF files found in {path}')
     print()
-
-    #cap_dir = '/home/pi/Desktop/RMS_data/CapturedFiles/UK0034_20230413_192722_486556/'
-    #email_attachments = []
-    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*_stack_*")))
-    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*captured_stack*")))
-    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*DETECTED*")))
-    #email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED*")))
-    #print(email_attachments)
-
-    #print(sendEmail(email_subject='UK0034',
-    #                email_content='http://istrastream.com/rms-gmn/?id=UK0034',
-    #                email_attachments=email_attachments))
 
 
 def checkDroppedFrames(directory):
