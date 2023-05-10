@@ -54,7 +54,7 @@ EMAIL_FRAMES = 5
 # to be annotated with the number of dropped frames when they
 # exceed ANNOTATE_IMAGE_FRAMES
 ANNOTATE_IMAGE = True
-ANNOTATE_IMAGE_FRAMES = 1
+ANNOTATE_IMAGE_FRAMES = 5
 
 
 def rmsExternal(cap_dir, arch_dir, config):
