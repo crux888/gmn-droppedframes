@@ -150,7 +150,7 @@ def rmsExternal(cap_dir, arch_dir, config):
     for file in email_attachments:
         log.info('image: %s', str(file))
     log.info(sendEmail(email_subject=f'{config.stationID}',
-                       email_content=f'http://istrastream.com/rms-gmn/?id={config.stationID}',
+                       email_content=f'{config.stationID}',
                        email_attachments=email_attachments))
 
     # Log end of external script for dropped frames
