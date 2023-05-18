@@ -171,11 +171,14 @@ def rmsExternal(cap_dir, arch_dir, config):
     except (IOError, OSError):
         log.info('additional script not called')
         try:
+            log.info('removing rebootlockfile')
             os.remove(rebootlockfile)
         except:
             log.info('unable to remove reboot lock file, pi will not reboot')
+        log.info('clearing log handlers')
         log = clearLogHandlers()
 
+    log.info('finished')
     return
 
 
@@ -183,6 +186,7 @@ def clearLogHandlers():
     """Function to clear existing log handlers"""
     log = logging.getLogger("logger")
     while len(log.handlers) > 0:
+        log.info({log.handlers[0]})
         log.removeHandler(log.handlers[0])
     return log
 
