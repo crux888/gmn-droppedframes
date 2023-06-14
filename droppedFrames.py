@@ -45,15 +45,17 @@ sys.path.append(os.path.split(os.path.abspath(__file__))[0])
 DROPPED_FRAME_TDELTA = timedelta(seconds=15)
 
 # Set EMAIL_RESULTS to True if you want a warning email to be sent
-# when the number of dropped frames exceeds EMAIL_FRAMES
-EMAIL_RESULTS = True
-EMAIL_FRAMES = 5
+# when the number of dropped frames exceeds EMAIL_FRAMES and make
+# sure that your email credentials have been added to myEmail.py
+# (see above)
+EMAIL_RESULTS = False
+EMAIL_FRAMES = 1
 
 # EXPERIMENTAL
 # Set ANNOTATE_IMAGE to True if you want a detected stack image
 # to be annotated with the number of dropped frames when they
 # exceed ANNOTATE_IMAGE_FRAMES
-ANNOTATE_IMAGE = True
+ANNOTATE_IMAGE = False
 ANNOTATE_IMAGE_FRAMES = 5
 
 
@@ -109,11 +111,11 @@ def rmsExternal(cap_dir, arch_dir, config):
     # Send warning email with # dropped frames
     if EMAIL_RESULTS and results["dropped frames"] >= EMAIL_FRAMES:
         log.info('sending email for dropped frames')
-        subject = f'Dropped frames for {config.stationID}'
-        message = (f'Found {results["dropped frames"]} FF files with a time gap ' +
-                   f'of more than {str(DROPPED_FRAME_TDELTA.seconds)} seconds\n\n')
+        subject = 'Dropped frames for {}'.format(config.stationID)
+        message = ('Found {} FF files with a time gap of more than {} seconds\n\n'.format(
+                results["dropped frames"], str(DROPPED_FRAME_TDELTA.seconds)))
         for detail in results["dropped details"]:
-            message += f'  {detail}\n'
+            message += '  {}\n'.format(detail)
         log.info(sendEmail(subject, message))
 
     # Annotate image with # dropped frams
@@ -135,8 +137,7 @@ def rmsExternal(cap_dir, arch_dir, config):
                         inner_msg = ' detected ('
                     else:
                         inner_msg = 's detected (average '
-                    message = (f'{results["dropped frames"]} dropped frame{inner_msg}'
-                               f'{results["dropped average"]} seconds)')
+                    message = '{} dropped frame{}{}{} seconds)'.format(results["dropped frames"], inner_msg, results["dropped average"])
                 annotateImage(new_file, message)
                 log.info('annotated image: %s', new_file)
 
@@ -149,8 +150,8 @@ def rmsExternal(cap_dir, arch_dir, config):
     email_attachments.extend(glob.glob(os.path.join(cap_dir, "*CAPTURED_thumbs.jpg")))
     for file in email_attachments:
         log.info('image: %s', str(file))
-    log.info(sendEmail(email_subject=f'{config.stationID}',
-                       email_content=f'{config.stationID}',
+    log.info(sendEmail(email_subject='{}'.format(config.stationID),
+                       email_content='{}'.format(config.stationID),
                        email_attachments=email_attachments))
 
     # Log end of external script for dropped frames
@@ -191,9 +192,9 @@ def clearLogHandlers():
     return log
 
 
-def sendEmail(email_subject: str = 'No subject',
-              email_content: str = 'No content',
-              email_attachments: list = []):
+def sendEmail(email_subject='No subject',
+              email_content='No content',
+              email_attachments=[]):
     """Function to send email"""
 
     # Get email credentials
@@ -222,7 +223,7 @@ def sendEmail(email_subject: str = 'No subject',
         smtp.login(email_from, email_from_password)
         smtp.send_message(msg)
 
-    return f'email sent to {email_to}'
+    return 'email sent to {}'.format(email_to)
 
 
 def annotateImage(img_path, message):
@@ -267,28 +268,25 @@ def commandLine():
         if results["files analysed"] > 0:
             print()
             print(directory)
-            print(
-                f'{results["files analysed"]:9,} FF files analysed.', end='')
+            print('{:9,} FF files analysed.'.format(results["files analysed"]), end='')
+
             if results["files ignored"] == 0 and results["dropped frames"] == 0:
                 print(' No dropped frames detected.')
             else:
                 print()
                 if results["files ignored"] > 0:
-                    print(
-                        f'{results["files ignored"]:9,} FF files ignored'
-                        f' (bad filename format).')
+                    print('{:9,} FF files ignored (bad filename format).'.format(results["files ignored"]))
                 if results["dropped frames"] >= 0:
-                    print(
-                        f'{results["dropped frames"]:9,} FF files found with a time gap'
-                        f' of more than {str(DROPPED_FRAME_TDELTA.seconds)} seconds:')
+                    print('{:9,} FF files found with a time gap of more than {} seconds:'.format(
+                        results["dropped frames"], str(DROPPED_FRAME_TDELTA.seconds)))
                     for detail in results["dropped details"]:
-                        print(f'            {detail}')
-            total_files += results["files analysed"]
+                        print('            {}'.format(detail))
+                total_files += results["files analysed"]
 
     # Finish
     if total_files == 0:
         print()
-        print(f'No FF files found in {path}')
+        print('No FF files found in {}'.format(path))
     print()
 
 
